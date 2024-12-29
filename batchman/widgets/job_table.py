@@ -1,24 +1,24 @@
+import json
+from dataclasses import dataclass
 from datetime import datetime
+
+from natsort import natsorted
+from textual import log
 from textual.coordinate import Coordinate
 from textual.message import Message
 from textual.widgets import DataTable
-from dataclasses import dataclass
-import json
-from natsort import natsorted
 
 from batchman.lib.batch import (
+    UnauthorizedError,
+    get_array_child_jobs,
+    get_jobs,
+    get_jobs_details,
     get_log_events,
     get_log_stream_name,
-    get_jobs,
-    get_array_child_jobs,
-    get_jobs_details,
-    UnauthorizedError,
 )
-from batchman.widgets.job_filter import FilterSettings
 from batchman.modals.message_popup_screen import MessagePopupScreen
 from batchman.modals.view_text_screen import ViewTextScreen
-
-from textual import log
+from batchman.widgets.job_filter import FilterSettings
 
 
 @dataclass
