@@ -1,0 +1,58 @@
+SelectorScreen {
+    align: center middle;
+}
+
+#selector-screen {
+    content-align: center middle;
+    max-height: 30;
+    margin: 4 8;
+    background: $panel;
+    color: $text;
+    border: tall $background;
+    padding: 1 2;
+}
+
+OptionList {
+    max-height: 20;
+}
+
+#view-text-screen {
+    max-height: 100%;
+    margin: 4 8;
+    background: $panel;
+    color: $text;
+    border: tall $background;
+    padding: 1 2;
+    grid-rows: 1fr 3 3;
+}
+
+JobTable {
+    min-width: 80;
+}
+
+JobFilter {
+    dock: right;
+    width: 40;
+}
+
+.filter-type-label {
+    margin: 1 1;
+}
+
+MessagePopupScreen {
+    align: center middle;
+}
+
+#message-popup-screen {
+    grid-size: 1;
+    padding: 1 2;
+    width: 60;
+    height: 11;
+    border: tall $background;
+    background: $panel;
+    color: $text;
+}
+
+.ok-button {
+    width: auto;
+}
