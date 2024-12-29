@@ -101,7 +101,7 @@ class BatchmanApp(App):
         yield Footer()
 
     def update_header(self):
-        self.title = f"Batchman - {self.config.job_queue_name}"
+        self.title = f"Batchman - {self.config.job_queue_name} ({self.config.region})"
 
     def set_job_queue(self, job_queue: str):
         self.config.job_queue_name = job_queue

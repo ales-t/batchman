@@ -10,26 +10,32 @@ class BaseSelectCommand(Provider):
 
     @property
     def fetch_fn(self):
+        """Function that fetches the list of items."""
         raise NotImplementedError()
 
     @property
     def set_fn(self):
+        """Function that sets the selected item."""
         raise NotImplementedError()
 
     @property
     def help_text(self):
+        """Help text for the command."""
         raise NotImplementedError()
 
     async def startup(self) -> None:
+        """Fetch the list of items at startup using self.fetch_fn."""
         worker = self.app.run_worker(self.fetch_fn, thread=True)
         self.item_names = await worker.wait()
 
     async def discover(self):
+        """Return all items when in eager mode."""
         if self.eager:
             for queue_name in self.item_names:
                 yield DiscoveryHit(queue_name, partial(self.set_fn, queue_name))
 
     async def search(self, query: str) -> Hits:
+        """Search for items that match the query."""
         matcher = self.matcher(query)
 
         for item_name in self.item_names:
