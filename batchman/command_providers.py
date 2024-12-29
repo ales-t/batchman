@@ -5,60 +5,72 @@ from textual.command import DiscoveryHit, Hit, Hits, Provider
 from batchman.lib.batch import get_job_queue_names, get_region_names
 
 
-class SelectJobQueueCommand(Provider):
+class BaseSelectCommand(Provider):
     eager = False
 
+    @property
+    def fetch_fn(self):
+        raise NotImplementedError()
+
+    @property
+    def set_fn(self):
+        raise NotImplementedError()
+
+    @property
+    def help_text(self):
+        raise NotImplementedError()
+
     async def startup(self) -> None:
-        worker = self.app.run_worker(lambda: get_job_queue_names(self.app.batch_client), thread=True)
-        self.queue_names = await worker.wait()
+        worker = self.app.run_worker(self.fetch_fn, thread=True)
+        self.item_names = await worker.wait()
 
     async def discover(self):
         if self.eager:
-            for queue_name in self.queue_names:
-                yield DiscoveryHit(queue_name, partial(self.app.set_job_queue, queue_name))
+            for queue_name in self.item_names:
+                yield DiscoveryHit(queue_name, partial(self.set_fn, queue_name))
 
     async def search(self, query: str) -> Hits:
         matcher = self.matcher(query)
 
-        for queue_name in self.queue_names:
-            command = queue_name
+        for item_name in self.item_names:
+            command = item_name
             score = matcher.match(command)
 
             if score > 0:
                 yield Hit(
                     score,
                     matcher.highlight(command),
-                    partial(self.app.set_job_queue, queue_name),
-                    help="Change job queue",
+                    partial(self.set_fn, item_name),
+                    help=self.help_text,
                 )
 
 
-class SelectRegionCommand(Provider):
-    eager = False
+class SelectJobQueueCommand(BaseSelectCommand):
+    @property
+    def fetch_fn(self):
+        return lambda: get_job_queue_names(self.app.batch_client)
 
-    async def startup(self) -> None:
-        worker = self.app.run_worker(get_region_names, thread=True)
-        self.region_names = await worker.wait()
+    @property
+    def set_fn(self):
+        return self.app.set_job_queue
 
-    async def discover(self):
-        if self.eager:
-            for region_name in self.region_names:
-                yield DiscoveryHit(region_name, partial(self.app.set_region, region_name))
+    @property
+    def help_text(self):
+        return "Change job queue"
 
-    async def search(self, query: str) -> Hits:
-        matcher = self.matcher(query)
 
-        for region_name in self.region_names:
-            command = region_name
-            score = matcher.match(command)
+class SelectRegionCommand(BaseSelectCommand):
+    @property
+    def fetch_fn(self):
+        return get_region_names
 
-            if score > 0:
-                yield Hit(
-                    score,
-                    matcher.highlight(command),
-                    partial(self.app.set_region, region_name),
-                    help="Change region",
-                )
+    @property
+    def set_fn(self):
+        return self.app.set_region
+
+    @property
+    def help_text(self):
+        return "Change region"
 
 
 class EagerSelectRegionCommand(SelectRegionCommand):
