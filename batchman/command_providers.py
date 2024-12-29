@@ -9,7 +9,7 @@ class SelectJobQueueCommand(Provider):
     eager = False
 
     async def startup(self) -> None:
-        worker = self.app.run_worker(lambda: get_job_queue_names(self.app.boto_client), thread=True)
+        worker = self.app.run_worker(lambda: get_job_queue_names(self.app.batch_client), thread=True)
         self.queue_names = await worker.wait()
 
     async def discover(self):

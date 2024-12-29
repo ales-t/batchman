@@ -1,6 +1,7 @@
+import itertools
+
 import boto3
 import botocore.exceptions
-import itertools
 from joblib import Parallel, delayed
 
 
@@ -36,6 +37,10 @@ def batches(data_set, batch_size: int):
 def flatten(lst: list[list]) -> list:
     """Flatten a list."""
     return list(itertools.chain.from_iterable(lst))
+
+
+def get_batch_client(region: str):
+    return boto3.client("batch", region_name=region)
 
 
 def get_log_events(log_stream_name: str):

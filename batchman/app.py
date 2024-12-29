@@ -3,7 +3,6 @@ import pathlib
 from dataclasses import dataclass
 from typing import Iterable
 
-import boto3
 import yaml
 from textual.app import App, ComposeResult, SystemCommand
 from textual.command import CommandPalette
@@ -11,7 +10,13 @@ from textual.containers import HorizontalGroup, VerticalScroll
 from textual.screen import Screen
 from textual.widgets import Footer, Header, Rule
 
-from batchman.command_providers import SelectJobQueueCommand, SelectRegionCommand
+from batchman.command_providers import (
+    EagerSelectJobQueueCommand,
+    EagerSelectRegionCommand,
+    SelectJobQueueCommand,
+    SelectRegionCommand,
+)
+from batchman.lib.batch import get_batch_client
 from batchman.widgets.job_filter import JobFilter
 from batchman.widgets.job_table import JobTable
 
@@ -66,7 +71,7 @@ class BatchmanApp(App):
         self.theme = self.config.theme
         atexit.register(self.config.save)
 
-        self.boto_client = self.get_boto_client()
+        self.batch_client = get_batch_client(self.config.region)
 
     def get_system_commands(self, screen: Screen) -> Iterable[SystemCommand]:
         yield from super().get_system_commands(screen)
@@ -103,12 +108,9 @@ class BatchmanApp(App):
         self.update_header()
         self.query_one(JobTable).refresh_jobs()
 
-    def get_boto_client(self):
-        return boto3.client("batch", region_name=self.config.region)
-
     def set_region(self, region: str):
         self.config.region = region
-        self.boto_client = self.get_boto_client()
+        self.batch_client = get_batch_client(self.config.region)
         self.update_header()
         self.query_one(JobTable).refresh_jobs()
 

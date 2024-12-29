@@ -59,7 +59,7 @@ class JobTable(DataTable):
         self.jobs.clear()
 
         try:
-            for job in get_jobs(self.app.boto_client, self.app.config.job_queue_name):
+            for job in get_jobs(self.app.batch_client, self.app.config.job_queue_name):
                 visible = self.job_should_be_visible(job)
                 self.jobs.append(
                     JobRecord(job=job, visible=visible, selected=False, is_array_job="arrayProperties" in job)
@@ -152,7 +152,7 @@ class JobTable(DataTable):
     async def expand_array_job(self, index: int):
         job = self.get_job_by_row(index)
 
-        child_jobs = natsorted(get_array_child_jobs(self.app.boto_client, job.job), key=lambda x: x["jobId"])
+        child_jobs = natsorted(get_array_child_jobs(self.app.batch_client, job.job), key=lambda x: x["jobId"])
 
         self.jobs = (
             self.jobs[: index + 1]
@@ -186,13 +186,13 @@ class JobTable(DataTable):
 
     def view_job_details(self):
         row_index = self.cursor_row
-        job_details = get_jobs_details(self.app.boto_client, [self.get_job_by_row(row_index).job["jobArn"]])[0]
+        job_details = get_jobs_details(self.app.batch_client, [self.get_job_by_row(row_index).job["jobArn"]])[0]
         serialized_details = json.dumps(job_details, ensure_ascii=False, indent=4)
         self.app.push_screen(ViewTextScreen(serialized_details, language="json"))
 
     def view_job_logs(self):
         row_index = self.cursor_row
-        job_details = get_jobs_details(self.app.boto_client, [self.get_job_by_row(row_index).job["jobArn"]])[0]
+        job_details = get_jobs_details(self.app.batch_client, [self.get_job_by_row(row_index).job["jobArn"]])[0]
         log_stream_name = get_log_stream_name(job_details)
 
         if log_stream_name:
