@@ -3,12 +3,21 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
+authors = [{ name = "Aleš Tamchyna", email = "a.tamchyna@gmail.com" }]
+license = { file = "LICENSE" }
+readme = { file = "README.md", content-type = "text/markdown" }
 name = "batchman"
 version = "0.1.0"
 description = "AWS Batch job explorer and manager"
-readme = "README.md"
 requires-python = ">=3.10"
-dependencies = ["boto3>=1.24.95", "natsort>=8.4.0", "textual[syntax]==1.0.0"]
+dependencies = [
+    "boto3>=1.24.95",
+    "joblib>=1.2.0",
+    "natsort>=8.4.0",
+    "textual[syntax]==1.0.0", # pinned
+    "PyYAML>=5.4.1",
+]
+keywords = ["aws", "batch", "tui", "textual", "job", "explorer", "manager"]
 
 [project.scripts]
 batchman = "batchman.main:main"
