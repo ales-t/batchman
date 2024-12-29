@@ -1,5 +1,7 @@
-batchman -- AWS Batch job explorer and manager
-==============================================
+Batchman 
+========
+
+**AWS Batch job explorer and manager**
 
 Batchman is a Textual-based terminal UI (TUI) application for exploring and managing AWS Batch jobs. It allows you to list jobs in a selected queue, view job details, expand array jobs, inspect logs, and filter jobs by name or status—all within your terminal.
 
