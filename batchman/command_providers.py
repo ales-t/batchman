@@ -5,65 +5,66 @@ from textual.command import DiscoveryHit, Hit, Hits, Provider
 from batchman.lib.batch import get_job_queue_names, get_region_names
 
 
-class SelectJobQueueCommand(Provider):
-    eager = False
+class BaseSelectCommand(Provider):
+    def __init__(self, *args, set_selected, help_str, item_getter, eager=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.item_getter = item_getter
+        self.set_selected = set_selected
+        self.help = help_str
+        self.eager = eager
 
-    async def startup(self) -> None:
-        worker = self.app.run_worker(lambda: get_job_queue_names(self.app.batch_client), thread=True)
-        self.queue_names = await worker.wait()
+    async def startup(self):
+        worker = self.app.run_worker(self.item_getter, thread=True)
+        self.items = await worker.wait()
 
     async def discover(self):
         if self.eager:
-            for queue_name in self.queue_names:
-                yield DiscoveryHit(queue_name, partial(self.app.set_job_queue, queue_name))
+            for item in self.items:
+                yield DiscoveryHit(item, partial(self.set_selected, item))
 
     async def search(self, query: str) -> Hits:
         matcher = self.matcher(query)
 
-        for queue_name in self.queue_names:
-            command = queue_name
+        for item in self.items:
+            command = item
             score = matcher.match(command)
 
             if score > 0:
                 yield Hit(
                     score,
                     matcher.highlight(command),
-                    partial(self.app.set_job_queue, queue_name),
-                    help="Change job queue",
+                    partial(self.set_selected, item),
+                    help=self.help,
                 )
 
 
-class SelectRegionCommand(Provider):
-    eager = False
+class SelectJobQueueCommand(BaseSelectCommand):
+    def __init__(self, *args, **kwargs):
+        super().__init__(
+            *args,
+            help_str="Change job queue",
+            set_selected=lambda x: self.app.set_job_queue(x),
+            item_getter=lambda: get_job_queue_names(self.app.batch_client),
+            **kwargs,
+        )
 
-    async def startup(self) -> None:
-        worker = self.app.run_worker(get_region_names, thread=True)
-        self.region_names = await worker.wait()
 
-    async def discover(self):
-        if self.eager:
-            for region_name in self.region_names:
-                yield DiscoveryHit(region_name, partial(self.app.set_region, region_name))
-
-    async def search(self, query: str) -> Hits:
-        matcher = self.matcher(query)
-
-        for region_name in self.region_names:
-            command = region_name
-            score = matcher.match(command)
-
-            if score > 0:
-                yield Hit(
-                    score,
-                    matcher.highlight(command),
-                    partial(self.app.set_region, region_name),
-                    help="Change region",
-                )
+class SelectRegionCommand(BaseSelectCommand):
+    def __init__(self, *args, **kwargs):
+        super().__init__(
+            *args,
+            item_getter=get_region_names,
+            set_selected=lambda x: self.app.set_region(x),
+            help_str="Change region",
+            **kwargs,
+        )
 
 
 class EagerSelectRegionCommand(SelectRegionCommand):
-    eager = True
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, eager=True, **kwargs)
 
 
 class EagerSelectJobQueueCommand(SelectJobQueueCommand):
-    eager = True
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, eager=True, **kwargs)
