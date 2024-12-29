@@ -48,10 +48,10 @@ class Config:
 class BatchmanApp(App):
     BINDINGS = [
         ("a", "select_all", "Select all jobs"),
-        # ("c", "change_queue", "Change job queue"),
+        ("c", "clone_selected", "Clone selected jobs"),
         ("d", "view_details", "View job details"),
         ("e", "toggle_expand_array_job", "Toggle array job expansion"),
-        # ("f", "toggle_filter", "Toggle filter visibility"),
+        ("k", "kill_selected", "Kill selected jobs"),
         ("l", "view_logs", "View job logs"),
         ("q", "quit", "Quit"),
         ("r", "refresh", "Refresh"),
@@ -162,6 +162,12 @@ class BatchmanApp(App):
 
     def action_refresh(self) -> None:
         self.query_one(JobTable).refresh_jobs()
+
+    def action_kill_selected(self) -> None:
+        self.query_one(JobTable).kill_selected_jobs()
+
+    def action_clone_selected(self) -> None:
+        self.query_one(JobTable).clone_selected_jobs()
 
     def action_quit(self) -> None:
         self.exit()

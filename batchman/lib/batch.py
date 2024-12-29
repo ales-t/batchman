@@ -68,11 +68,18 @@ def get_log_stream_name(job_details: dict) -> str | None:
     return job_details["container"].get("logStreamName")
 
 
-def get_array_child_jobs(client: boto3.client, parent_job: dict | None = None) -> list[dict]:
+def get_array_child_jobs(client: boto3.client, parent_job: dict | None = None):
     all_states = ["SUCCEEDED", "FAILED", "RUNNABLE", "RUNNING", "PENDING", "STARTING"]
     for status in all_states:
         query_params = {"arrayJobId": parent_job["jobArn"], "jobStatus": status}
         yield from execute_paginated_job_query(client, query_params)
+
+
+def kill_jobs(client: boto3.client, job_ids: list[str], reason: str = "Killed by Batchman user"):
+    for job_id in job_ids:
+        # we try both cancel_job and terminate_job because we want to be sure
+        client.cancel_job(jobId=job_id, reason=reason)
+        client.terminate_job(jobId=job_id, reason=reason)
 
 
 def get_jobs(client: boto3.client, queue_name: str):

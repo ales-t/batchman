@@ -15,8 +15,10 @@ from batchman.lib.batch import (
     get_jobs_details,
     get_log_events,
     get_log_stream_name,
+    kill_jobs,
 )
-from batchman.modals.message_popup_screen import MessagePopupScreen
+from batchman.modals.confirmation_screen import ConfirmationScreen
+from batchman.modals.message_screen import MessageScreen
 from batchman.modals.view_text_screen import ViewTextScreen
 from batchman.widgets.job_filter import FilterSettings
 
@@ -94,7 +96,7 @@ class JobTable(DataTable):
         )
 
     def on_job_table_error_state_message(self, message):
-        self.app.push_screen(MessagePopupScreen(message.message, fatal=True))
+        self.app.push_screen(MessageScreen(message.message, fatal=True))
 
     def job_should_be_visible(self, job: dict) -> bool:
         return self.filter_settings.job_matches(job)
@@ -149,7 +151,7 @@ class JobTable(DataTable):
         self.redraw_rows()
         self.cursor_coordinate = Coordinate(index, 0)
 
-    async def expand_array_job(self, index: int):
+    def expand_array_job(self, index: int):
         job = self.get_job_by_row(index)
 
         child_jobs = natsorted(get_array_child_jobs(self.app.batch_client, job.job), key=lambda x: x["jobId"])
@@ -205,6 +207,36 @@ class JobTable(DataTable):
     def refresh_jobs(self):
         self.loading = True
         self.run_worker(self.update, exclusive=True, exit_on_error=False, thread=True)
+
+    def _get_selected_jobs(self, select_highlighted=False):
+        selected_jobs = [job.job for job in self.jobs if job.selected]
+        if not selected_jobs:
+            if self.cursor_row is not None and select_highlighted:
+                highlighted_job = self.get_job_by_row(self.cursor_row)
+                highlighted_job.selected = True
+                self.redraw_rows()
+                selected_jobs = [highlighted_job.job]
+            else:
+                self.app.notify("No jobs selected", severity="warning")
+                return None
+        return selected_jobs
+
+    def kill_selected_jobs(self):
+        selected_jobs = self._get_selected_jobs(select_highlighted=True)
+        if selected_jobs is None:
+            return
+
+        def run_kill_jobs():
+            self.run_worker(kill_jobs(self.app.batch_client, [job["jobId"] for job in selected_jobs]), thread=True)
+            self.refresh_jobs()
+
+        self.app.push_screen(
+            ConfirmationScreen(
+                f"Kill {len(selected_jobs)} selected jobs?",
+                run_kill_jobs,
+                selected_jobs,
+            )
+        )
 
     def on_data_table_header_selected(self, event: DataTable.HeaderSelected):
         # sort by column that was clicked

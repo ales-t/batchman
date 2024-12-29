@@ -12,6 +12,21 @@ SelectorScreen {
     padding: 1 2;
 }
 
+ConfirmationScreen {
+    align: center middle;
+}
+
+#confirmation-screen {
+    content-align: center middle;
+    max-width: 60;
+    height: auto;
+    margin: 4 8;
+    background: $panel;
+    color: $text;
+    border: tall $background;
+    padding: 1 2;
+}
+
 OptionList {
     max-height: 20;
 }
