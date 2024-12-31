@@ -21,7 +21,7 @@ class MessageScreen(ModalScreen):
             Center(
                 Button("OK", variant="primary", id="ok", classes="ok-button"),
             ),
-            id="message-popup-screen",
+            id="message-screen",
         )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:

@@ -54,11 +54,11 @@ JobFilter {
     margin: 1 1;
 }
 
-MessagePopupScreen {
+MessageScreen {
     align: center middle;
 }
 
-#message-popup-screen {
+#message-screen {
     grid-size: 1;
     padding: 1 2;
     width: 60;

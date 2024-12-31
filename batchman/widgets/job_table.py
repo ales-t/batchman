@@ -69,13 +69,13 @@ class JobTable(DataTable):
                 if visible:
                     self.draw_row(self.jobs[-1])
                     self.loading = False
+            self.app.notify("All jobs loaded", severity="information", timeout=1)
         except UnauthorizedError:
             self.post_message(self.ErrorStateMessage("Unauthorized. Did you forget to login?"))
         except Exception as e:
             self.post_message(self.ErrorStateMessage(f"Error loading jobs: {e}"))
         finally:
             self.loading = False
-            self.app.notify("All jobs loaded", severity="information", timeout=1)
             self.focus()
 
     def draw_row(self, job: JobRecord):
