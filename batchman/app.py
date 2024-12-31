@@ -59,7 +59,7 @@ class BatchmanApp(App):
         ("x", "clear_selection", "Clear selection"),
     ]
 
-    COMMANDS = App.COMMANDS | {SelectJobQueueCommand} | {SelectRegionCommand}
+    COMMANDS = App.COMMANDS | {SelectJobQueueCommand, SelectRegionCommand}
 
     CSS_PATH = "batchman.tcss"
 
