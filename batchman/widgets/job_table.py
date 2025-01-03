@@ -151,7 +151,7 @@ class JobTable(DataTable):
         self.redraw_rows()
         self.cursor_coordinate = Coordinate(index, 0)
 
-    def expand_array_job(self, index: int):
+    async def expand_array_job(self, index: int):
         job = self.get_job_by_row(index)
 
         child_jobs = natsorted(get_array_child_jobs(self.app.batch_client, job.job), key=lambda x: x["jobId"])
