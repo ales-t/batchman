@@ -242,6 +242,9 @@ class JobTable(DataTable):
             )
         )
 
+    def clone_selected_jobs(self):
+        self.app.notify("Cloning jobs is not yet supported", severity="warning")
+
     def on_data_table_header_selected(self, event: DataTable.HeaderSelected):
         # sort by column that was clicked
         sort_keys = dict(enumerate(["selected", "jobName", "jobId", "createdAt", "status"]))
