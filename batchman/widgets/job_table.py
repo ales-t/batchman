@@ -207,8 +207,10 @@ class JobTable(DataTable):
             self.app.notify("No logs available", severity="warning")
 
     def refresh_jobs(self):
-        self.loading = True
-        self.run_worker(self.update, exclusive=True, exit_on_error=False, thread=True)
+        if not self.loading:
+            self.loading = True
+            # the exclusive flag doesn't really work for some reason so we "lock" by checking the loading flag
+            self.run_worker(self.update, exclusive=True, exit_on_error=False, thread=True)
 
     def _get_selected_jobs(self, select_highlighted=False):
         selected_jobs = [job.job for job in self.jobs if job.selected]
