@@ -194,12 +194,14 @@ class JobTable(DataTable):
 
     def view_job_logs(self):
         row_index = self.cursor_row
-        job_details = get_jobs_details(self.app.batch_client, [self.get_job_by_row(row_index).job["jobArn"]])[0]
+        job_record = self.get_job_by_row(row_index)
+        job_details = get_jobs_details(self.app.batch_client, [job_record.job["jobArn"]])[0]
         log_stream_name = get_log_stream_name(job_details)
 
         if log_stream_name:
             self.app.push_screen(ViewTextScreen(text_generator_fn=lambda: get_log_events(log_stream_name)))
-        elif "arrayProperties" in job_details:
+        elif job_record.is_array_job and not job_record.parent_job:
+            # this is a parent array job
             self.app.notify("Log stream not available for array jobs", severity="warning")
         else:
             self.app.notify("No logs available", severity="warning")
