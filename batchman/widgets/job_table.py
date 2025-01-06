@@ -26,7 +26,6 @@ from batchman.widgets.job_filter import FilterSettings
 @dataclass
 class JobRecord:
     job: dict
-    visible: bool
     selected: bool
     is_array_job: bool
     is_expanded: bool = False
@@ -63,9 +62,7 @@ class JobTable(DataTable):
         try:
             for job in get_jobs(self.app.batch_client, self.app.config.job_queue_name):
                 visible = self.job_should_be_visible(job)
-                self.jobs.append(
-                    JobRecord(job=job, visible=visible, selected=False, is_array_job="arrayProperties" in job)
-                )
+                self.jobs.append(JobRecord(job=job, selected=False, is_array_job="arrayProperties" in job))
                 if visible:
                     self.draw_row(self.jobs[-1])
                     self.loading = False
@@ -158,10 +155,7 @@ class JobTable(DataTable):
 
         self.jobs = (
             self.jobs[: index + 1]
-            + [
-                JobRecord(job=child_job, visible=True, selected=False, is_array_job=True, parent_job=job)
-                for child_job in child_jobs
-            ]
+            + [JobRecord(job=child_job, selected=False, is_array_job=True, parent_job=job) for child_job in child_jobs]
             + self.jobs[index + 1 :]
         )
         self.jobs[index].is_expanded = True
@@ -175,7 +169,7 @@ class JobTable(DataTable):
 
     def select_all(self):
         for job in self.jobs:
-            if job.visible:
+            if self.job_should_be_visible(job.job):
                 job.selected = True
 
         self.redraw_rows()
@@ -213,9 +207,9 @@ class JobTable(DataTable):
             self.run_worker(self.update, exclusive=True, exit_on_error=False, thread=True)
 
     def _get_selected_jobs(self, select_highlighted=False):
-        selected_jobs = [job.job for job in self.jobs if job.selected]
+        selected_jobs = [job.job for job in self.jobs if job.selected and self.job_should_be_visible(job.job)]
         if not selected_jobs:
-            if self.cursor_row is not None and select_highlighted:
+            if self.row_count > 0 and self.cursor_row is not None and select_highlighted:
                 highlighted_job = self.get_job_by_row(self.cursor_row)
                 highlighted_job.selected = True
                 self.redraw_rows()
