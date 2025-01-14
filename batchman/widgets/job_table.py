@@ -36,6 +36,23 @@ def utc_from_timestamp(timestamp: int) -> str:
     return datetime.fromtimestamp(float(timestamp) / 1000).strftime("%Y-%m-%d %H:%M:%S")
 
 
+def inject_highlighted_job(fn):
+    """Decorator to inject the currently highlighted job into the function arguments.
+
+    Handles the corner cases so we don't need to repeat ourselves.
+    """
+
+    def wrapper(self, *args, **kwargs):
+        index = self.cursor_row
+        if self.row_count > 0 and index is not None:
+            job_record = self.get_job_by_row(index)
+            return fn(self, job_record, index, *args, **kwargs)
+        else:
+            self.app.notify("No job selected", severity="warning")
+
+    return wrapper
+
+
 class JobTable(DataTable):
     class ErrorStateMessage(Message):
         def __init__(self, message: str, *args, **kwargs):
@@ -121,15 +138,15 @@ class JobTable(DataTable):
 
         raise ValueError(f"Job with ID {job_id} not found")
 
-    def toggle_selected(self, index: int):
-        job = self.get_job_by_row(index)
-        job.selected = not job.selected
+    @inject_highlighted_job
+    def toggle_selected(self, job_record: JobRecord, index: int):
+        job_record.selected = not job_record.selected
 
-        new_value = "X" if job.selected else " "
+        new_value = "X" if job_record.selected else " "
         self.update_cell_at(Coordinate(index, 0), new_value)
 
-    def toggle_expand_array_job(self, index: int):
-        job = self.get_job_by_row(index)
+    @inject_highlighted_job
+    def toggle_expand_array_job(self, job: JobRecord, index: int):
         if job.is_array_job:
             if job.parent_job:
                 self.collapse_array_job(self.get_job_index(job.parent_job.job["jobId"]))
@@ -164,8 +181,9 @@ class JobTable(DataTable):
         self.cursor_coordinate = Coordinate(index, 0)
         self.app.notify(f"Array job {job.job['jobName']} expanded.", severity="information")
 
-    def on_data_table_row_selected(self, event: DataTable.RowSelected):
-        self.toggle_selected(event.cursor_row)
+    # # This is usually not desirable because it's too easy to accidentally select a row
+    # def on_data_table_row_selected(self, event: DataTable.RowSelected):
+    #     self.toggle_selected(event.cursor_row)
 
     def select_all(self):
         for job in self.jobs:
@@ -180,15 +198,14 @@ class JobTable(DataTable):
 
         self.redraw_rows()
 
-    def view_job_details(self):
-        row_index = self.cursor_row
-        job_details = get_jobs_details(self.app.batch_client, [self.get_job_by_row(row_index).job["jobArn"]])[0]
+    @inject_highlighted_job
+    def view_job_details(self, job_record: JobRecord, index: int):
+        job_details = get_jobs_details(self.app.batch_client, [job_record.job["jobArn"]])[0]
         serialized_details = json.dumps(job_details, ensure_ascii=False, indent=4)
         self.app.push_screen(ViewTextScreen(serialized_details, language="json"))
 
-    def view_job_logs(self):
-        row_index = self.cursor_row
-        job_record = self.get_job_by_row(row_index)
+    @inject_highlighted_job
+    def view_job_logs(self, job_record: JobRecord, index: int):
         job_details = get_jobs_details(self.app.batch_client, [job_record.job["jobArn"]])[0]
         log_stream_name = get_log_stream_name(job_details)
 
