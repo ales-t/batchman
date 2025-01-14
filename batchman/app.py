@@ -147,12 +147,10 @@ class BatchmanApp(App):
         self.query_one(JobTable).clear_selection()
 
     def action_toggle_selection(self) -> None:
-        job_table = self.query_one(JobTable)
-        job_table.toggle_selected(job_table.cursor_row)
+        self.query_one(JobTable).toggle_selected()
 
     def action_toggle_expand_array_job(self) -> None:
-        job_table = self.query_one(JobTable)
-        job_table.toggle_expand_array_job(job_table.cursor_row)
+        self.query_one(JobTable).toggle_expand_array_job()
 
     def action_view_details(self) -> None:
         self.query_one(JobTable).view_job_details()
