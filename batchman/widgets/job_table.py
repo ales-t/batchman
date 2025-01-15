@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from natsort import natsorted
-from textual import log
+from textual import log, work
 from textual.coordinate import Coordinate
 from textual.message import Message
 from textual.widgets import DataTable
@@ -19,7 +19,10 @@ from batchman.lib.batch import (
 )
 from batchman.modals.confirmation_screen import ConfirmationScreen
 from batchman.modals.message_screen import MessageScreen
-from batchman.modals.view_text_screen import ViewTextScreen
+from batchman.modals.view_text_screen import (
+    ViewTextScreen,
+    ViewTextScreenWithSaveButton,
+)
 from batchman.widgets.job_filter import FilterSettings
 
 
@@ -72,6 +75,7 @@ class JobTable(DataTable):
         self.add_columns("Selected", "Job Name", "Job ID", "Created At", "Status")
         self.refresh_jobs()
 
+    @work(thread=True, exclusive=True, exit_on_error=False)
     def update(self):
         self.clear()
         self.jobs.clear()
@@ -154,7 +158,7 @@ class JobTable(DataTable):
                 self.collapse_array_job(index)
             else:
                 self.app.notify(f"Expanding array job {job.job['jobName']}, hang tight...", severity="information")
-                self.run_worker(self.expand_array_job(index), exclusive=True, thread=True)
+                self.expand_array_job(index)
         else:
             self.app.notify("Can only expand array jobs", severity="warning")
 
@@ -165,6 +169,7 @@ class JobTable(DataTable):
         self.redraw_rows()
         self.cursor_coordinate = Coordinate(index, 0)
 
+    @work(thread=True, exclusive=True)
     async def expand_array_job(self, index: int):
         job = self.get_job_by_row(index)
 
@@ -207,10 +212,16 @@ class JobTable(DataTable):
     @inject_highlighted_job
     def view_job_logs(self, job_record: JobRecord, index: int):
         job_details = get_jobs_details(self.app.batch_client, [job_record.job["jobArn"]])[0]
+        job_name = job_details["jobName"]
         log_stream_name = get_log_stream_name(job_details)
 
         if log_stream_name:
-            self.app.push_screen(ViewTextScreen(text_generator_fn=lambda: get_log_events(log_stream_name)))
+            self.app.push_screen(
+                ViewTextScreenWithSaveButton(
+                    text_generator_fn=lambda: get_log_events(log_stream_name),
+                    default_file_name=f"{job_name}.log",
+                )
+            )
         elif job_record.is_array_job and not job_record.parent_job:
             # this is a parent array job
             self.app.notify("Log stream not available for array jobs", severity="warning")
@@ -221,7 +232,7 @@ class JobTable(DataTable):
         if not self.loading:
             self.loading = True
             # the exclusive flag doesn't really work for some reason so we "lock" by checking the loading flag
-            self.run_worker(self.update, exclusive=True, exit_on_error=False, thread=True)
+            self.update()
 
     def _get_selected_jobs(self, select_highlighted=False):
         selected_jobs = [job.job for job in self.jobs if job.selected and self.job_should_be_visible(job.job)]
