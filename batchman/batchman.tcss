@@ -31,6 +31,10 @@ OptionList {
     max-height: 20;
 }
 
+.spacer {
+    width: 1fr;
+}
+
 #view-text-screen {
     max-height: 100%;
     margin: 4 8;

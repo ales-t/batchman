@@ -1,11 +1,12 @@
 import asyncio
+
 from textual import work
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Grid, VerticalScroll
+from textual.containers import Grid
 from textual.message import Message
 from textual.screen import ModalScreen
-from textual.widgets import Button, TextArea, Pretty, Rule
+from textual.widgets import Button, Rule, TextArea
 
 
 class ReadOnlyTextArea(TextArea):
