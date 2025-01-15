@@ -16,7 +16,11 @@ ConfirmationScreen {
     align: center middle;
 }
 
-#confirmation-screen {
+TextInputScreen {
+    align: center middle;
+}
+
+#confirmation-screen, #text-input-screen {
     content-align: center middle;
     max-width: 60;
     height: auto;

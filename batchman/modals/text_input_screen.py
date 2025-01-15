@@ -27,10 +27,10 @@ class TextInputScreen(ModalScreen):
                 Static("", classes="spacer"),
                 Button("Cancel", variant="primary", id="cancel"),
             ),
-            id="confirmation-screen",
+            id="text-input-screen",
         )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         self.app.pop_screen()
         if event.button.id == "confirm":
-            self.confirm_callback(self.query_one("#input").text)
+            self.confirm_callback(self.query_one("#input").value)

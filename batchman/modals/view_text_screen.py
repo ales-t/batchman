@@ -6,6 +6,8 @@ from textual.message import Message
 from textual.screen import ModalScreen
 from textual.widgets import Button, Rule, Static, TextArea
 
+from batchman.modals.text_input_screen import TextInputScreen
+
 
 class ReadOnlyTextArea(TextArea):
     BINDINGS = TextArea.BINDINGS + [
@@ -22,10 +24,10 @@ class ViewTextScreen(ModalScreen):
 
     def __init__(
         self,
+        *args,
         text: str | None = None,
         text_generator_fn=None,
         language: str | None = None,
-        *args,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
@@ -76,6 +78,15 @@ class ViewTextScreen(ModalScreen):
 
 
 class ViewTextScreenWithSaveButton(ViewTextScreen):
+    def __init__(
+        self,
+        *args,
+        default_file_name: str | None = None,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+        self.default_file_name = default_file_name
+
     def compose(self):
         yield Grid(
             ReadOnlyTextArea(self.text, id="text", language=self.language),
@@ -92,9 +103,15 @@ class ViewTextScreenWithSaveButton(ViewTextScreen):
         # this is the strangest behavior: inheritance registers both event handlers (parent and child class)
         # (which means closing is handled in the base class and we shouldn't do it here)
         if event.button.id == "save-to-file":
-            self.save_to_file()
+            self.show_file_save_dialog()
 
-    def save_to_file(self):
-        self.app.notify("test")
-        # TODO
-        # self.app.pop_screen()
+    def show_file_save_dialog(self):
+        def save_file_callback(file_path: str):
+            try:
+                with open(file_path, "w") as f:
+                    f.write(self.text)
+                self.app.notify(f"File saved to {file_path}", severity="success")
+            except Exception as e:
+                self.app.notify(f"Failed to save file: {e}", severity="error")
+
+        self.app.push_screen(TextInputScreen("Enter file path", save_file_callback, self.default_file_name))
