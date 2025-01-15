@@ -19,7 +19,10 @@ from batchman.lib.batch import (
 )
 from batchman.modals.confirmation_screen import ConfirmationScreen
 from batchman.modals.message_screen import MessageScreen
-from batchman.modals.view_text_screen import ViewTextScreen
+from batchman.modals.view_text_screen import (
+    ViewTextScreen,
+    ViewTextScreenWithSaveButton,
+)
 from batchman.widgets.job_filter import FilterSettings
 
 
@@ -210,7 +213,9 @@ class JobTable(DataTable):
         log_stream_name = get_log_stream_name(job_details)
 
         if log_stream_name:
-            self.app.push_screen(ViewTextScreen(text_generator_fn=lambda: get_log_events(log_stream_name)))
+            self.app.push_screen(
+                ViewTextScreenWithSaveButton(text_generator_fn=lambda: get_log_events(log_stream_name))
+            )
         elif job_record.is_array_job and not job_record.parent_job:
             # this is a parent array job
             self.app.notify("Log stream not available for array jobs", severity="warning")
