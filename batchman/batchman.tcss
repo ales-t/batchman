@@ -1,4 +1,4 @@
-SelectorScreen {
+SelectorScreen, ConfirmationScreen, TextInputScreen, MessageScreen, ViewTextScreen {
     align: center middle;
 }
 
@@ -10,14 +10,6 @@ SelectorScreen {
     color: $text;
     border: tall $background;
     padding: 1 2;
-}
-
-ConfirmationScreen {
-    align: center middle;
-}
-
-TextInputScreen {
-    align: center middle;
 }
 
 #confirmation-screen, #text-input-screen {
@@ -60,10 +52,6 @@ JobFilter {
 
 .filter-type-label {
     margin: 1 1;
-}
-
-MessageScreen {
-    align: center middle;
 }
 
 #message-screen {
