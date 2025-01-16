@@ -207,7 +207,7 @@ class JobTable(DataTable):
     def view_job_details(self, job_record: JobRecord, index: int):
         job_details = get_jobs_details(self.app.batch_client, [job_record.job["jobArn"]])[0]
         serialized_details = json.dumps(job_details, ensure_ascii=False, indent=4)
-        self.app.push_screen(ViewTextScreen(serialized_details, language="json"))
+        self.app.push_screen(ViewTextScreen(text=serialized_details, language="json"))
 
     @inject_highlighted_job
     def view_job_logs(self, job_record: JobRecord, index: int):
